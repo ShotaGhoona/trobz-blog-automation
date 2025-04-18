@@ -2,12 +2,11 @@ export const runtime = 'nodejs';
 export const maxDuration = 300; // 5分のタイムアウト設定
 
 import { NextRequest, NextResponse } from 'next/server';
-// import { verify } from '@/libs/verifyWebhook';
+import { verify } from '@/libs/verifyWebhook';
 import { notion } from '@/libs/notionClient';
 import { openai } from '@/libs/openaiClient';
 import { generateKeywordPrompt } from '@/prompts/keyword';
 import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
-import { verifyBody } from '@/libs/verifyWebhook'; 
 
 type KeywordPage = PageObjectResponse & {
   properties: {
@@ -26,19 +25,15 @@ type BlogProperties = {
 };
 
 export async function POST(req: NextRequest) {
-  /* ★ 追加：リクエスト内容をそのまま見る */
-  const raw = await req.text();                        // ← 文字列で受け取る
-  console.log('🛬 Notion Webhook RAW ↓\n', raw);       // Vercel Logs に出力
-  const body = raw ? JSON.parse(raw) : {};             // JSON 化
-
   try {
-    /* verifyBody が { customId } を返すようにしておく */
-    const { customId } = verifyBody(body, req);
+    const { customId } = await verify(req);
 
-    /* ↓ 以降は従来コードのまま */
     const { results } = await notion.databases.query({
       database_id: process.env.NOTION_KEYWORD_DB_ID!,
-      filter: { property: 'ID', number: { equals: customId } },
+      filter: {
+        property: 'ID',
+        number: { equals: customId },
+      },
       page_size: 1,
     });
     if (!results.length) throw new Error('Keyword not found');

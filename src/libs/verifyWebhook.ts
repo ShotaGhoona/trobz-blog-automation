@@ -1,35 +1,16 @@
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 
-export const verify = async (req: NextRequest) => {
-  const body = await req.json().catch(() => ({}));
+export async function verify(req: NextRequest) {
+  const secret = req.nextUrl.searchParams.get('secret');
+  if (!secret) throw new Error('Secret missing');
 
-  // secret は URL クエリに載せる
-  if (req.nextUrl.searchParams.get('secret') !== process.env.WEBHOOK_SECRET) {
+  if (secret !== process.env.NOTION_WEBHOOK_SECRET) {
     throw new Error('Invalid secret');
   }
 
-  // Notion 自動化は { "ID": { "number": 2 } } か { "№ ID": 2 } など
-  const idField = body.ID ?? body['ID'];
-  const customId: number =
-    typeof idField === 'object' ? idField.number : idField;
-
-  if (typeof customId !== 'number') throw new Error('ID missing');
+  const body = await req.json();
+  const customId = body.data?.properties?.ID?.unique_id?.number;
+  if (!customId) throw new Error('ID missing');
 
   return { customId };
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const verifyBody = (body: any, req: NextRequest) => {
-  /* secret は URL クエリでチェック */
-  if (req.nextUrl.searchParams.get('secret') !== process.env.WEBHOOK_SECRET)
-    throw new Error('Invalid secret');
-
-  // Notion Automation は { "<列名>": { "number": 3 } } で来る
-  const raw = body.ID ?? body['№ ID'];          // 列名どちらでも OK
-  const customId =
-    typeof raw === 'object' ? raw.number : raw; // ラップ解除
-
-  if (typeof customId !== 'number') throw new Error('ID missing');
-
-  return { customId };
-};
+}
