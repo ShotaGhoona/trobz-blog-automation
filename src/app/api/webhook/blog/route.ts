@@ -1,3 +1,6 @@
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5分のタイムアウト設定
+
 import { NextRequest, NextResponse } from 'next/server';
 import { verify } from '@/libs/verifyWebhook';
 import { notion } from '@/libs/notionClient';
