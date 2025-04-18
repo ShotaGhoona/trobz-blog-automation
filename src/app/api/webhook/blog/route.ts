@@ -14,10 +14,17 @@ import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoint
 type BlogPage = PageObjectResponse & {
   properties: {
     Title: {
+      type: 'title';
       title: Array<{ plain_text: string }>;
     };
     キーワード: {
+      type: 'relation';
       relation: Array<{ id: string }>;
+    };
+    [key: string]: {
+      type: string;
+      rich_text?: Array<{ plain_text: string }>;
+      [key: string]: any;
     };
   };
 };
@@ -48,33 +55,41 @@ export async function POST(req: NextRequest) {
       page => (page as BlogPage).properties.Title.title[0].plain_text
     );
 
-    /** 3. GPT-4-turbo で "ブログ本文" を生成 */
-    const prompt = generateBlogPrompt(`${title} - ${keywords.join(', ')}`);
+    // 各見出しごとに本文を生成して追加
+    for (let i = 1; i <= 10; i++) {
+      const headingKey = `見出し${i}`;
+      const heading = blogPage.properties[headingKey];
+      if (!heading?.rich_text?.[0]) continue;
 
-    const ai = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.7,
-      messages: [{ role: 'user', content: prompt }],
-    });
+      const headingText = heading.rich_text[0].plain_text;
+      const prompt = generateBlogPrompt(`${title} - ${headingText} - ${keywords.join(', ')}`);
 
-    let raw = ai.choices[0].message.content!.trim();
-
-    // 先頭・末尾の ``` を取り除く
-    if (raw.startsWith('```')) {
-      raw = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();
-    }
-
-    /** 4. Notion ページにブログ本文を追加 */
-    const blocks = markdownToBlocks(raw);
-    for (const slice of chunkSmart(blocks)) {
-      await notion.blocks.children.append({
-        block_id: blogPage.id,
-        children: slice,
+      const ai = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }],
       });
-      await sleep(400); // appendごとに短い待機
+
+      let raw = ai.choices[0].message.content!.trim();
+      if (raw.startsWith('```')) {
+        raw = raw.replace(/^```[a-z]*\n?/i, '').replace(/```$/, '').trim();
+      }
+
+      const blocks = markdownToBlocks(raw);
+      
+      // ブロックを分割して追加
+      for (const slice of chunkSmart(blocks)) {
+        await notion.blocks.children.append({
+          block_id: blogPage.id,
+          children: slice,
+        });
+        await sleep(2000);
+      }
+
+      // 各見出しの生成後に少し待機
+      await sleep(2000);
     }
 
-    /** 5. OK */
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
     console.error('/blog error', error);

@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const prompt = generateKeywordPrompt(keyword);
 
     const ai = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o',
       temperature: 0.7,
       messages: [{ role: 'user', content: prompt }],
     });
