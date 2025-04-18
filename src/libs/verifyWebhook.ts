@@ -1,13 +1,15 @@
 import { NextRequest } from 'next/server';
 
+const WEBHOOK_SECRET = '791a9a8a9736431a9a144b94b9d177fe18fdd50af25faa33e6f320efc9de9afd';
+
 export async function verify(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get('secret');
   console.log('Received secret:', secret);
-  console.log('Expected secret:', process.env.NOTION_WEBHOOK_SECRET);
+  console.log('Expected secret:', WEBHOOK_SECRET);
 
   if (!secret) throw new Error('Secret missing');
 
-  if (secret !== process.env.NOTION_WEBHOOK_SECRET) {
+  if (secret !== WEBHOOK_SECRET) {
     console.error('Secret mismatch');
     throw new Error('Invalid secret');
   }
