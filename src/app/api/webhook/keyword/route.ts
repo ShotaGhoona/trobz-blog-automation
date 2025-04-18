@@ -13,6 +13,14 @@ type KeywordPage = PageObjectResponse & {
   };
 };
 
+type BlogProperties = {
+  Title: { title: Array<{ text: { content: string } }> };
+  ID: { number: number };
+  キーワード: { relation: Array<{ id: string }> };
+} & {
+  [K in `見出し${number}`]: { rich_text: Array<{ text: { content: string } }> };
+};
+
 export async function POST(req: NextRequest) {
   try {
     const { customId } = await verify(req);
@@ -50,19 +58,21 @@ export async function POST(req: NextRequest) {
 
     /** 4. Blogs DB に 10 レコード create */
     for (const [i, blog] of blogs.entries()) {
+      const properties: BlogProperties = {
+        Title: { title: [{ text: { content: blog.title } }] },
+        ID: { number: Date.now() + i },
+        キーワード: {
+          relation: [{ id: keywordPage.id }],
+        },
+      } as BlogProperties;
+
+      blog.items.forEach((v, idx) => {
+        properties[`見出し${idx + 1}`] = { rich_text: [{ text: { content: v } }] };
+      });
+
       await notion.pages.create({
         parent: { database_id: process.env.NOTION_BLOG_DB_ID! },
-        properties: {
-          Title: { title: [{ text: { content: blog.title } }] },
-          ID: { number: Date.now() + i }, // 任意採番
-          キーワード: {
-            relation: [{ id: keywordPage.id }],
-          },
-          ...blog.items.reduce((acc, v, idx) => {
-            acc[`見出し${idx + 1}`] = { rich_text: [{ text: { content: v } }] };
-            return acc;
-          }, {} as Record<string, any>),
-        },
+        properties,
       });
     }
 
