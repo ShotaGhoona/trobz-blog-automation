@@ -9,7 +9,7 @@ export const verify = async (req: NextRequest) => {
   }
 
   // Notion 自動化は { "ID": { "number": 2 } } か { "№ ID": 2 } など
-  const idField = body.ID ?? body['№ ID'];
+  const idField = body.ID ?? body['ID'];
   const customId: number =
     typeof idField === 'object' ? idField.number : idField;
 

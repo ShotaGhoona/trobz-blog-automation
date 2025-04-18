@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const { results } = await notion.databases.query({
       database_id: process.env.NOTION_KEYWORD_DB_ID!,
       filter: {
-        property: '№ ID',
+        property: 'ID',
         number: { equals: customId },
       },
       page_size: 1,
