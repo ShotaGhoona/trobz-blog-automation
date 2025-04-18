@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const { results } = await notion.databases.query({
       database_id: process.env.NOTION_BLOG_DB_ID!,
       filter: {
-        property: '№ ID',
+        property: 'ID',
         number: { equals: customId },
       },
       page_size: 1,
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const prompt = generateBlogPrompt(`${title} - ${keywords.join(', ')}`);
 
     const ai = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o',
       temperature: 0.7,
       messages: [{ role: 'user', content: prompt }],
     });
