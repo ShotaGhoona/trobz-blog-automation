@@ -6,19 +6,28 @@ import { chunkSmart } from '@/libs/utils/chunkBlocks';
 import { sleep } from '@/libs/utils/sleep';
 import { generateBlogPrompt } from '@/prompts/blog';
 import { markdownToBlocks } from '@/libs/markdownToBlocks';
+import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+
+type BlogPage = PageObjectResponse & {
+  properties: {
+    [key: string]: {
+      rich_text: Array<{ plain_text: string }>;
+    };
+  };
+};
 
 export async function POST(req: NextRequest) {
   try {
-    const { customId } = await verify(req, 'blog');
+    const { customId } = await verify(req);
 
-    /** 1. 対象ブログページ取得 */
     const { results } = await notion.databases.query({
       database_id: process.env.NOTION_BLOG_DB_ID!,
       filter: { property: 'ID', number: { equals: customId } },
       page_size: 1,
     });
     if (!results.length) throw new Error('Blog not found');
-    const page = results[0] as any;
+    
+    const page = results[0] as BlogPage;
 
     /** 2. 10 見出しを配列化 */
     const headings = [...Array(10)].map((_, i) =>
@@ -52,8 +61,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    console.error('/blog error', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('/blog error', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
-} 
+}

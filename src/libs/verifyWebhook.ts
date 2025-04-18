@@ -2,7 +2,6 @@ import type { NextRequest } from 'next/server';
 
 export const verify = async (
   req: NextRequest,
-  type: 'keyword' | 'blog',
 ) => {
   const body = await req.json().catch(() => ({}));
   const headerSecret = req.headers.get('x-secret');

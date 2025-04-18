@@ -3,13 +3,20 @@ import { verify } from '@/libs/verifyWebhook';
 import { notion } from '@/libs/notionClient';
 import { openai } from '@/libs/openaiClient';
 import { generateKeywordPrompt } from '@/prompts/keyword';
+import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+
+type KeywordPage = PageObjectResponse & {
+  properties: {
+    Title: {
+      title: Array<{ plain_text: string }>;
+    };
+  };
+};
 
 export async function POST(req: NextRequest) {
   try {
-    /** 1. Webhook 検証 */
-    const { customId } = await verify(req, 'keyword');
+    const { customId } = await verify(req);
 
-    /** 2. customId で Keywords DB を検索 */
     const { results } = await notion.databases.query({
       database_id: process.env.NOTION_KEYWORD_DB_ID!,
       filter: {
@@ -19,7 +26,8 @@ export async function POST(req: NextRequest) {
       page_size: 1,
     });
     if (!results.length) throw new Error('Keyword not found');
-    const keywordPage = results[0] as any;
+    
+    const keywordPage = results[0] as KeywordPage;
     const keyword = keywordPage.properties.Title.title[0].plain_text;
 
     /** 3. GPT-4-turbo で "タイトル＋目次×10" を生成 */
@@ -60,8 +68,11 @@ export async function POST(req: NextRequest) {
 
     /** 5. OK */
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    console.error('/keyword error', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('/keyword error', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
-} 
+}
