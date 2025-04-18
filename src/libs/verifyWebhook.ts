@@ -18,7 +18,7 @@ export const verify = async (req: NextRequest) => {
   return { customId };
 };
 
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const verifyBody = (body: any, req: NextRequest) => {
   /* secret は URL クエリでチェック */
   if (req.nextUrl.searchParams.get('secret') !== process.env.WEBHOOK_SECRET)
