@@ -1,13 +1,13 @@
 {
     "functions": {
-      "api/webhook/keyword.js": {
-        "memory": 1024,      
-        "maxDuration": 60    
-      },
-      "api/webhook/blog.js": {
-        "memory": 1024,
-        "maxDuration": 300   
-      }
+        "app/api/webhook/keyword/route.js": {
+            "memory": 1024,      
+            "maxDuration": 60    
+        },
+        "app/api/webhook/blog/route.js": {
+            "memory": 1024,
+            "maxDuration": 300   
+        }
     }
   }
   
