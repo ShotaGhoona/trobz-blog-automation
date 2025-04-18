@@ -24,7 +24,22 @@ type BlogPage = PageObjectResponse & {
     [key: string]: {
       type: string;
       rich_text?: Array<{ plain_text: string }>;
-      [key: string]: any;
+      title?: Array<{ plain_text: string }>;
+      relation?: Array<{ id: string }>;
+      number?: number | null;
+      url?: string | null;
+      select?: { name: string } | null;
+      multi_select?: Array<{ name: string }>;
+      date?: { start: string } | null;
+      checkbox?: boolean;
+      email?: string | null;
+      phone_number?: string | null;
+      formula?: { type: string; string?: string; number?: number };
+      rollup?: { type: string; array?: Array<{ title?: Array<{ plain_text: string }> }> };
+      created_time?: string;
+      last_edited_time?: string;
+      created_by?: { object: string; id: string };
+      last_edited_by?: { object: string; id: string };
     };
   };
 };
