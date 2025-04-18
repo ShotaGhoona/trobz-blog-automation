@@ -17,3 +17,19 @@ export const verify = async (req: NextRequest) => {
 
   return { customId };
 };
+
+
+export const verifyBody = (body: any, req: NextRequest) => {
+  /* secret は URL クエリでチェック */
+  if (req.nextUrl.searchParams.get('secret') !== process.env.WEBHOOK_SECRET)
+    throw new Error('Invalid secret');
+
+  // Notion Automation は { "<列名>": { "number": 3 } } で来る
+  const raw = body.ID ?? body['№ ID'];          // 列名どちらでも OK
+  const customId =
+    typeof raw === 'object' ? raw.number : raw; // ラップ解除
+
+  if (typeof customId !== 'number') throw new Error('ID missing');
+
+  return { customId };
+};
