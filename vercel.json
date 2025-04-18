@@ -1,0 +1,13 @@
+{
+    "functions": {
+      "api/webhook/keyword.ts": {
+        "memory": 1024,      
+        "maxDuration": 60    
+      },
+      "api/webhook/blog.ts": {
+        "memory": 1024,
+        "maxDuration": 300   
+      }
+    }
+  }
+  
